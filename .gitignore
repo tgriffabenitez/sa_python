@@ -2,3 +2,5 @@ Guias/*
 *.pdf
 *.exe
 *.csv
+*.sqlite
+*.xlsx
