@@ -5,6 +5,13 @@ import sqlite3
 import openpyxl
 import os
 
+### CLASES PARA EXCEPCIONES ###
+
+# Clase para excepcion de ID inexistente
+class IDNoExiste(Exception):
+    pass
+
+
 ### FUNCIONES ###
 
 # Funcion para mostrar el menu
@@ -19,6 +26,21 @@ def mostrarMenu():
     print("|----------------------------------------|")
     opcion = int(input("Ingrese la operacion: "))
     return opcion
+
+
+# Funcion para verificar si un producto existe en la base de datos
+# Recibe el cursor y el ID del producto
+# Devuelve True si existe, False si no existe
+def existeProducto(cursor, producto):
+    existe = True
+
+    cursor.execute("SELECT * FROM precios WHERE IDProd = ? AND Estado = ?", (producto_id, True))
+    fila = cursor.fetchone()
+
+    if fila == None:
+        existe = False
+        
+    return existe
 
 
 # Funcion para dar de alta un producto en la base de datos
@@ -67,27 +89,23 @@ def BajaProducto(producto_id):
         raise ValueError("Error, el ID debe ser un numero positivo.\n")
 
     try:
-        # Verifico que el ID exista en la base de datos
-        cursor.execute("SELECT * FROM precios WHERE IDProd = ?", (producto_id,))
-        fila = cursor.fetchone()
-
-        if fila == None:
-            # Si no existe, lanzo una excepcion
-            raise ValueError("Error, el ID {} no existe en la base de datos.\n".format(producto_id))
-        
-        else:
+        # Verifico si el producto existe en la base de datos
+        if existeProducto(cursor, producto_id):
             cursor.execute("UPDATE precios SET Estado = ? WHERE IDProd = ?", (False, producto_id))
             conn.commit()
-            print("El producto se dio de baja.\n")
+            print("El producto se dio de baja correctamente.\n")
             conn.close()
+        
+        else:
+            raise IDNoExiste("Error, el ID {} no existe en la base de datos.\n".format(producto_id))
 
     except Exception as e:
         print("{}".format(e))
         conn.close()
 
 
-# Funcion para modificar el precio de un producto en la base de datos
-# Recibe el ID del producto a modificar y el nuevo precio
+# Funcion para modificar el precio de un producto (que esta activo) en la base de datos
+# Recibe el ID del producto activo a modificar y el nuevo precio
 def ModificarPrecio(producto_id, precio):
     conn = sqlite3.connect("database.sqlite")
     cursor = conn.cursor()
@@ -105,19 +123,15 @@ def ModificarPrecio(producto_id, precio):
         raise ValueError("Error, el precio debe ser un numero positivo.\n")
 
     try:
-        # Verifico que el ID exista en la base de datos
-        cursor.execute("SELECT * FROM precios WHERE IDProd = ?", (producto_id,))
-        fila = cursor.fetchone()
-
-        if fila == None:
-            # Si no existe, lanzo una excepcion
-            raise ValueError("Error, el ID {} no existe en la base de datos.\n".format(producto_id))
-        
-        else:
+        # Verifico si el producto existe en la base de datos
+        if existeProducto(cursor, producto_id):
             cursor.execute("UPDATE precios SET Precio = ? WHERE IDProd = ?", (precio, producto_id))
             conn.commit()
-            print("Se actualizo el precio del producto.\n")
+            print("El precio se modifico correctamente.\n")
             conn.close()
+        
+        else:
+            raise IDNoExiste("Error, el ID {} no existe en la base de datos.\n".format(producto_id))
     
     except Exception as e:
         print("{}".format(e))
@@ -141,7 +155,7 @@ def ListadoProductos():
         conn.close()
 
     else:
-        print("Listado de productos activos:")
+        print("\nListado de productos activos:")
         print("{:<5} {:<15} {:>10}".format("ID", "Producto", "Precio"))
         for fila in cursor:
             print("{:<5} {:<15} {:>10}".format(fila[0], fila[1], fila[2]))
@@ -155,7 +169,7 @@ def ExportarXLSX():
     cursor = conn.cursor()
 
     if os.path.exists("lista-de-precios.xlsx"):
-        if input("El archivo lista-de-precios.xlsx ya existe. Desea sobreescribirlo? s/n: ") == "n":
+        if input("El archivo lista-de-precios.xlsx ya existe. Desea sobreescribirlo? s/n: ").lower() != "s":
             print("Se cancelo la operacion.\n")
             conn.close()
             return
