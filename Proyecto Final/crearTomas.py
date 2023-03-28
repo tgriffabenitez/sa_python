@@ -9,7 +9,8 @@ cursor = conn.cursor()
 try:
     # creo la tabla de precios
     cursor.execute("CREATE TABLE precios (IDProd INTEGER PRIMARY KEY AUTOINCREMENT, Producto TEXT, Precio NUMERIC, Estado BOOLEAN)")
-except:
+    
+except sqlite3.OperationalError:
     # si la tabla ya existe, pregunto si la quiero sobreescribir
     print("Ya existe la tabla precios.")
     if input("Desea sobreescribirla? (s/n): ").lower() == "s":
@@ -20,6 +21,11 @@ except:
     else:
         print("No se sobreescribio la tabla precios\n")
         conn.close()
+
+except Exception as e:
+    print("Error, No se pudo crear la tabla de precios")
+    print("{}".format(e))
+    conn.close()
 
 else:
     productos = (
