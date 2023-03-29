@@ -12,6 +12,11 @@ class IDNoExiste(Exception):
     pass
 
 
+# Clase para excepcion de base de datos inexistente
+class DBNoExiste(Exception):
+    pass
+
+
 ### FUNCIONES ###
 
 # Funcion para mostrar el menu
@@ -63,8 +68,7 @@ def AltaProducto(producto, precio):
         conn.close()
 
     except sqlite3.OperationalError:
-        print("Error, la tabla no existe en la base de datos.\n")
-        conn.close()
+        raise DBNoExiste("Error, la tabla no existe en la base de datos. Primero ejecute el archivo crearTomas.py\n")
 
     except Exception:
         print("Error, no se pudo dar de alta el producto.")
@@ -98,7 +102,10 @@ def BajaProducto(producto_id):
         
         else:
             raise IDNoExiste("Error, el ID {} no existe en la base de datos.\n".format(producto_id))
-
+        
+    except sqlite3.OperationalError:
+        raise DBNoExiste("Error, la tabla no existe en la base de datos. Primero ejecute el archivo crearTomas.py\n")
+    
     except Exception as e:
         print("{}".format(e))
         conn.close()
@@ -132,6 +139,9 @@ def ModificarPrecio(producto_id, precio):
         
         else:
             raise IDNoExiste("Error, el ID {} no existe en la base de datos.\n".format(producto_id))
+        
+    except sqlite3.OperationalError:
+        raise DBNoExiste("Error, la tabla no existe en la base de datos. Primero ejecute el archivo crearTomas.py\n")
     
     except Exception as e:
         print("{}".format(e))
@@ -147,8 +157,7 @@ def ListadoProductos():
         cursor.execute("SELECT * FROM precios WHERE Estado = ?", (True,))
         
     except sqlite3.OperationalError:
-        print("Error, no existe la tabla en la base de datos.\n")
-        conn.close()
+        raise DBNoExiste("Error, la tabla no existe en la base de datos. Primero ejecute el archivo crearTomas.py\n")
 
     except Exception as e:
         print("Error, {}".format(e))
@@ -178,9 +187,7 @@ def ExportarXLSX():
         cursor.execute("SELECT * FROM precios WHERE Precio >= ? AND Estado = ?", (1000, True))
 
     except sqlite3.OperationalError:
-        print("Error, la tabla no existe en la base de datos.\n")
-        conn.close()
-        return
+        raise DBNoExiste("Error, la tabla no existe en la base de datos. Primero ejecute el archivo crearTomas.py\n")
     
     except Exception as e:
         print("Error, {}".format(e))
@@ -233,6 +240,10 @@ while True:
 
         except TypeError as e:
             print("Error, el precio no puede ser igual a cero o negativo.\n")
+
+        except DBNoExiste as e:
+            print("{}".format(e))
+            break
         
         except Exception as e:
             print("Error, {}".format(e))
@@ -249,6 +260,10 @@ while True:
         
         except TypeError:
             print("Error, el ID debe ser un numero.\n")
+
+        except DBNoExiste as e:
+            print("{}".format(e))
+            break
 
         except Exception as e:
             print("Error, no se pudo dar de baja el producto.\n")
@@ -267,6 +282,10 @@ while True:
         except TypeError:
             print("Error, el ID y el precio deben ser numeros.\n")
 
+        except DBNoExiste as e:
+            print("{}".format(e))
+            break
+
         except Exception as e:
             print("Error, {}".format(e))
 
@@ -274,6 +293,11 @@ while True:
     elif opcion == 4:
         try:
             ListadoProductos()
+        
+        except DBNoExiste as e:
+            print("{}".format(e))
+            break
+
         except Exception as e:
             print("Error, {}".format(e))
 
@@ -282,6 +306,10 @@ while True:
         try:
             ExportarXLSX()
         
+        except DBNoExiste as e:
+            print("{}".format(e))
+            break
+
         except Exception as e:
             print("{}".format(e))
             print("Error, no se pudo exportar el listado de productos.\n")
