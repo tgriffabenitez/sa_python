@@ -220,9 +220,14 @@ while True:
     if opcion == 1:
         try:
             producto = input("Ingrese el nombre del producto: ")
+            if producto is None or producto.strip() == "":
+                raise NameError("Error, el nombre producto no puede estar vacio.")
+            
             precio = float(input("Ingrese el precio del producto: "))
             AltaProducto(producto, precio)
-        
+        except NameError as e:
+            print("{}".format(e))
+            
         except ValueError:
             print("Error, el precio debe ser un numero positivo mayor a cero.\n")
 
